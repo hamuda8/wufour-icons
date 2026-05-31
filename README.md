@@ -28,8 +28,5 @@ wufour-icons/
 ├── package.json
 ├── index.js             # The backend rendering engine
 └── icons/               # The repository of pure .svg files
-    ├── navigation/
-    │   ├── cart.svg
-    │   └── home.svg
-    └── actions/
-        └── trash.svg
+    ├── /misc
+      ├── cart.svg
