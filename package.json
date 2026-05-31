@@ -5,6 +5,6 @@
   "main": "index.js",
   "files": [
     "index.js",
-    "public/"
+    "icons/"
   ]
 }
