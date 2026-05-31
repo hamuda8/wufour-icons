@@ -17,21 +17,17 @@ class WufourIconsEngine {
         }
     }
 
-    // 1. Load specific icon: WufourIcons.loadIcon('navigation', 'cart') OR WufourIcons.loadIcon('', 'Taazur')
     loadIcon(categoryName, iconName) {
         const key = categoryName ? `${categoryName}.${iconName}` : iconName;
         const folder = categoryName ? path.join(__dirname, 'icons', categoryName) : path.join(__dirname, 'icons');
         this._loadFile(path.join(folder, `${iconName}.svg`), key);
     }
 
-    // 2. Load category (Accepts String or Array): WufourIcons.loadCategory(['nav', 'actions'])
     loadCategory(categories) {
         const cats = Array.isArray(categories) ? categories : [categories];
-        
         cats.forEach(categoryName => {
             const dirPath = path.join(__dirname, 'icons', categoryName);
             if (!fs.existsSync(dirPath)) return;
-            
             const files = fs.readdirSync(dirPath).filter(f => f.endsWith('.svg'));
             for (const file of files) {
                 const iconName = file.replace('.svg', '');
@@ -40,7 +36,6 @@ class WufourIconsEngine {
         });
     }
 
-    // 3. Load EVERYTHING automatically
     loadAll() {
         const iconsDir = path.join(__dirname, 'icons');
         if (!fs.existsSync(iconsDir)) return;
@@ -59,19 +54,48 @@ class WufourIconsEngine {
                 }
             }
         };
-
         scanDir(iconsDir);
-        console.log(`[WufourIcons] Loaded all icons. Total: ${Object.keys(this.registry).length}`);
     }
 
-    render(htmlString) {
-        const regex = /<w-icon\s+name="([^"]+)"(?:\s+class="([^"]*)")?\s*\/?>/g;
-        return htmlString.replace(regex, (match, fullName, className) => {
-            let svg = this.registry[fullName];
-            if (!svg) return match; 
-            if (className) svg = svg.replace('<svg ', `<svg class="${className}" `);
-            return svg;
-        });
+    // THIS IS THE GENIUS PART: It outputs the script that makes the tags work in the browser!
+    getScriptTag() {
+        return `
+        <script>
+            // 1. The Dictionary
+            window.__WUFOUR_ICONS__ = ${JSON.stringify(this.registry)};
+            
+            // 2. The Web Component (Replaces itself with the SVG)
+            class WufourIcon extends HTMLElement {
+                connectedCallback() {
+                    const name = this.getAttribute('name');
+                    if (!name) return;
+                    
+                    // Allow calling by full name 'nav.cart' or just 'cart'
+                    let svgText = window.__WUFOUR_ICONS__[name];
+                    if (!svgText) {
+                        const fallbackKey = Object.keys(window.__WUFOUR_ICONS__).find(k => k.endsWith('.' + name) || k === name);
+                        svgText = window.__WUFOUR_ICONS__[fallbackKey];
+                    }
+                    
+                    if (svgText) {
+                        const div = document.createElement('div');
+                        div.innerHTML = svgText;
+                        const svg = div.querySelector('svg');
+                        
+                        if (svg) {
+                            if (this.className) svg.setAttribute('class', this.className);
+                            this.replaceWith(svg); // Vaporizes the <wufour-icon> tag and leaves the pure <svg>
+                        }
+                    } else {
+                        console.warn('[WufourIcons] Icon not found:', name);
+                    }
+                }
+            }
+            if (!customElements.get('wufour-icon')) {
+                customElements.define('wufour-icon', WufourIcon);
+            }
+        </script>
+        `;
     }
 }
 
