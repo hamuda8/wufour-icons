@@ -1,24 +1,41 @@
-// index.js
 export class WufourIcon extends HTMLElement {
     async connectedCallback() {
-        const name = this.getAttribute('name');
-        const category = this.getAttribute('category');
+        const fullName = this.getAttribute('name'); // e.g., "navigation.cart"
         
-        // Fetch the icon from your library's "public" folder
-        // Note: You will need to ensure your build/setup makes these accessible
-        const response = await fetch(`/node_modules/wufour-icons/public/${category}/${name}.svg`);
-        const svgText = await response.text();
+        if (!fullName || !fullName.includes('.')) {
+            console.error("[WufourIcons] Invalid name format. Use 'category.iconName'");
+            return;
+        }
+
+        const [category, iconName] = fullName.split('.');
         
-        // Inject the SVG content
-        this.innerHTML = svgText;
+        // Use the global path or default to standard node_modules path
+        const basePath = window.WUFOUR_ICONS_PATH || '/node_modules/wufour-icons/public';
+        const url = `${basePath}/${category}/${iconName}.svg`;
         
-        // Carry over any classes from the tag to the SVG
-        const svg = this.querySelector('svg');
-        if (this.className) {
-            svg.classList.add(this.className);
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Icon '${fullName}' not found at ${url}`);
+            
+            const svgText = await response.text();
+            
+            // Create a temporary container to sanitize the SVG
+            const div = document.createElement('div');
+            div.innerHTML = svgText;
+            const svg = div.querySelector('svg');
+            
+            if (svg) {
+                // Apply classes from the <wufour-icon> tag to the SVG
+                if (this.className) svg.classList.add(this.className);
+                
+                // Final swap
+                this.innerHTML = '';
+                this.appendChild(svg);
+            }
+        } catch (err) {
+            console.error(`[WufourIcons] ${err.message}`);
         }
     }
 }
 
-// Register the custom element
 customElements.define('wufour-icon', WufourIcon);
