@@ -1,29 +1,35 @@
 # ⬡ Wufour Icons
 
-![Vanilla JS](https://img.shields.io/badge/Vanilla-JS-f7df1e?style=for-the-badge&logo=javascript&logoColor=black)
-![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-brightgreen?style=for-the-badge)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Zero Frontend JS](https://img.shields.io/badge/Frontend_JS-0KB-brightgreen?style=for-the-badge)
 ![TwOP Architecture](https://img.shields.io/badge/Architecture-TwOP-4f46e5?style=for-the-badge)
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 
-**Wufour Icons** is a minimalist, zero-dependency, dynamically injected inline SVG icon library. 
+**Wufour Icons** is a high-performance, backend-driven SVG injection engine built specifically for the **TwOP (Two Origins Principle)** architecture.
 
-Built specifically to align with the **[TwOP (Two Origins Principle) Architecture]**, this library provides a native Web Component that fetches `.svg` files on demand and injects them directly into the DOM. This allows for total CSS control over your icons (`fill`, `stroke`, etc.) without bloating your initial JavaScript bundles or relying on heavy third-party frameworks.
+Instead of relying on browser-side fetching, Web Components, or exposing internal `node_modules` directories to the public internet, Wufour Icons intercepts your HTML on the backend. It scans for custom `<w-icon>` tags and seamlessly replaces them with raw, inline `<svg>` code before the page is ever sent to the user.
 
----
-
-## ✨ Features
-
-* **Zero Dependencies:** Pure Vanilla JavaScript using native Web Components.
-* **Fully Inline:** Icons are injected as raw `<svg>` tags, meaning full support for CSS transitions, hover states, and dynamic coloring.
-* **Dot-Notation Routing:** Call icons cleanly using their folder structure: `<wufour-icon name="actions.trash"></wufour-icon>`.
-* **Infinitely Scalable:** Adding a new icon is as simple as dropping an `.svg` file into the `icons/` folder. Zero JavaScript updates required.
-* **TwOP Compliant:** Maintains strict separation between Private (logic) and Public (assets) origins.
+The browser receives pure HTML and inline SVGs. Zero frontend JavaScript required. Zero network delays.
 
 ---
 
-## 📦 Installation
+## ✨ Core Principles
 
-Install directly from GitHub via npm:
+* **TwOP Absolute Compliance:** The `node_modules` directory remains strictly Private. The Frontend handles zero logic for asset loading.
+* **100% Memory Control:** You explicitly dictate which icon categories are loaded into server RAM. Unused folders consume zero memory.
+* **Inline Styling:** Because the output is a raw `<svg>` tag, your CSS handles all `fill`, `stroke`, and `transition` states natively.
+* **Infinite Scalability:** Drop an `.svg` file into a category folder, and it becomes instantly available. The core engine never requires maintenance.
 
-```bash
-npm install github:yourusername/wufour-icons
+---
+
+## 📁 Library Structure
+
+```text
+wufour-icons/
+├── package.json
+├── index.js             # The backend rendering engine
+└── icons/               # The repository of pure .svg files
+    ├── navigation/
+    │   ├── cart.svg
+    │   └── home.svg
+    └── actions/
+        └── trash.svg
