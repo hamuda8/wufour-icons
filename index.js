@@ -57,20 +57,37 @@ class WufourIconsEngine {
         scanDir(iconsDir);
     }
 
-    // THIS IS THE GENIUS PART: It outputs the script that makes the tags work in the browser!
+    // 1. FOR STATIC HTML: Runs on the backend inside render-file.js
+    render(htmlString) {
+        // Safely matches <wufour-icon name="X"> with or without a closing tag
+        const regex = /<wufour-icon\s+name="([^"]+)"(?:\s+class="([^"]*)")?\s*\/?>(?:<\/wufour-icon>)?/g;
+        
+        return htmlString.replace(regex, (match, fullName, className) => {
+            let svgText = this.registry[fullName];
+            
+            // Smart lookup: if they typed "trash" instead of "actions.trash"
+            if (!svgText) {
+                const fallbackKey = Object.keys(this.registry).find(k => k.endsWith('.' + fullName) || k === fullName);
+                svgText = this.registry[fallbackKey];
+            }
+
+            if (!svgText) return match; // Leave tag alone if icon not found
+            if (className) svgText = svgText.replace('<svg ', `<svg class="${className}" `);
+            return svgText;
+        });
+    }
+
+    // 2. FOR DYNAMIC JS: Creates the Web Component for your layout.js / render-products.js
     getScriptTag() {
         return `
         <script>
-            // 1. The Dictionary
             window.__WUFOUR_ICONS__ = ${JSON.stringify(this.registry)};
             
-            // 2. The Web Component (Replaces itself with the SVG)
             class WufourIcon extends HTMLElement {
                 connectedCallback() {
                     const name = this.getAttribute('name');
                     if (!name) return;
                     
-                    // Allow calling by full name 'nav.cart' or just 'cart'
                     let svgText = window.__WUFOUR_ICONS__[name];
                     if (!svgText) {
                         const fallbackKey = Object.keys(window.__WUFOUR_ICONS__).find(k => k.endsWith('.' + name) || k === name);
@@ -84,7 +101,7 @@ class WufourIconsEngine {
                         
                         if (svg) {
                             if (this.className) svg.setAttribute('class', this.className);
-                            this.replaceWith(svg); // Vaporizes the <wufour-icon> tag and leaves the pure <svg>
+                            this.replaceWith(svg);
                         }
                     } else {
                         console.warn('[WufourIcons] Icon not found:', name);
