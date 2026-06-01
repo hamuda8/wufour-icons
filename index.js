@@ -59,20 +59,27 @@ class WufourIconsEngine {
 
     // 1. FOR STATIC HTML: Runs on the backend inside render-file.js
     render(htmlString) {
-        // Safely matches <wufour-icon name="X"> with or without a closing tag
-        const regex = /<wufour-icon\s+name="([^"]+)"(?:\s+class="([^"]*)")?\s*\/?>(?:<\/wufour-icon>)?/g;
+        // Matches <wufour-icon name="X" attr="Y"></wufour-icon> AND <wufour-icon name="X" attr="Y" />
+        const regex = /<wufour-icon\s+name="([^"]+)"([^>]*)\/?>(?:<\/wufour-icon>)?/g;
         
-        return htmlString.replace(regex, (match, fullName, className) => {
+        return htmlString.replace(regex, (match, fullName, otherAttributes) => {
             let svgText = this.registry[fullName];
             
-            // Smart lookup: if they typed "trash" instead of "actions.trash"
+            // Fallback lookup
             if (!svgText) {
                 const fallbackKey = Object.keys(this.registry).find(k => k.endsWith('.' + fullName) || k === fullName);
                 svgText = this.registry[fallbackKey];
             }
 
-            if (!svgText) return match; // Leave tag alone if icon not found
-            if (className) svgText = svgText.replace('<svg ', `<svg class="${className}" `);
+            if (!svgText) return match; 
+            
+            // Inject all attributes (class, id, style, alt) gracefully into the raw SVG
+            if (otherAttributes && otherAttributes.trim()) {
+                // Remove the closing slash if it accidentally got caught in otherAttributes
+                const cleanAttributes = otherAttributes.replace(/\/$/, '').trim();
+                svgText = svgText.replace('<svg ', `<svg ${cleanAttributes} `);
+            }
+            
             return svgText;
         });
     }
